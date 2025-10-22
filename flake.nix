@@ -198,7 +198,6 @@
               mpv
               chromium
               firefox
-              qbittorrent
               telegram-desktop
               prismlauncher
             ];

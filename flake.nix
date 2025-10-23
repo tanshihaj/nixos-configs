@@ -220,13 +220,6 @@
               # sadly the only DE that both support fractional display scale AND stable enough to be usable is KDE
               desktopManager.plasma6.enable = true;
               displayManager.sddm.enable = true;
-
-              jellyfin = {
-                enable = true;
-                openFirewall = true;
-                user = "kamil";
-                group = "users";
-              };
             };
             virtualisation.docker.enable = true;
             virtualisation.libvirtd.enable = true;
@@ -286,21 +279,34 @@
                 logRefusedConnections = false;
                 enable = true;
                 interfaces = {
+                  wlp1s0.allowedTCPPorts = [
+                    22
+                    8096 # jellyfin API + WebUI
+                  ];
                   wlp1s0.allowedUDPPorts = [
                     67
                     68
+                    1900 # DLNA
+                    7359 # jellyfin discovery
                   ];
-                  wlp1s0.allowedTCPPorts = [ 22 ];
+                  enP2p1s0.allowedTCPPorts = [
+                    22
+                    8096 # jellyfin API + WebUI
+                  ];
                   enP2p1s0.allowedUDPPorts = [
                     67
                     68
+                    1900 # DLNA
+                    7359 # jellyfin discovery
                   ];
-                  enP2p1s0.allowedTCPPorts = [ 22 ];
                   # usb-front-2.allowedUDPPorts = [
                   #   67
                   #   68
                   # ];
-                  ${config.services.tailscale.interfaceName}.allowedTCPPorts = [ 22 ];
+                  ${config.services.tailscale.interfaceName}.allowedTCPPorts = [
+                    22
+                    80
+                  ];
                 };
                 allowedUDPPorts = [ config.services.tailscale.port ];
               };
@@ -327,6 +333,10 @@
                     DHCPServer = true;
                     IPMasquerade = "ipv4";
                   };
+                  dhcpServerConfig = {
+                    EmitDNS = true;
+                    DNS = [ "1.1.1.1" "8.8.8.8" ];
+                  };
                 };
                 enP1p1s0 = {
                   matchConfig.Name = "enP1p1s0";
@@ -342,7 +352,10 @@
                     DHCPServer = true;
                     IPMasquerade = "ipv4";
                   };
-                  dhcpServerConfig.EmitDNS = true;
+                  dhcpServerConfig = {
+                    EmitDNS = true;
+                    DNS = [ "1.1.1.1" "8.8.8.8" ];
+                  };
                 };
                 # usb-front-2 = {
                 #   matchConfig.Name = "usb-front-2";
@@ -354,55 +367,101 @@
                 # };
               };
             };
-            services.resolved.enable = true;
+            services = {
+              resolved.enable = true;
 
-            services.hostapd = {
-              enable = true;
-              radios.wlp1s0 = {
-                countryCode = "IL";
-                channel = 36;
-                settings = {
-                  "he_oper_centr_freq_seg0_idx" = "42";
-                  "vht_oper_centr_freq_seg0_idx" = "42";
-                  "preamble" = 1;
+              qbittorrent = {
+                enable = true;
+                user = "kamil";
+                group = "users";
+                serverConfig = {
+                  LegalNotice.Accepted = true;
+                  Preferences = {
+                    WebUI = {
+                      Address = "127.0.0.1";
+                      LocalHostAuth = false;
+                      ServerDomains = "qbittorrent.zaripov.vpn";
+                    };
+                  };
                 };
-                band = "5g";
-                wifi6 = {
-                  enable = true;
-                  operatingChannelWidth = "80";
+              };
+              jellyfin = {
+                enable = true;
+                user = "kamil";
+                group = "users";
+              };
+              nginx = {
+                enable = true;
+                recommendedProxySettings = true;
+
+                defaultListen = [
+                  { addr = "100.64.0.1"; port = 80; ssl = false; }
+                ];
+                virtualHosts."qbittorrent.zaripov.vpn" = {
+                  locations."/" = {
+                    proxyPass = "http://127.0.0.1:${toString config.services.qbittorrent.webuiPort}";
+                  };
                 };
-                wifi5 = {
-                  enable = true;
-                  operatingChannelWidth = "80";
-                  capabilities = [
-                    "MAX-MPDU-11454"
-                    "RXLDPC"
-                    "SHORT-GI-80"
-                    "TX-STBC-2BY1"
-                    "MU-BEAMFORMEE"
-                    "SU-BEAMFORMEE"
-                    "RX-ANTENNA-PATTERN"
-                    "TX-ANTENNA-PATTERN"
-                  ];
+                virtualHosts."jellyfin.zaripov.vpn" = {
+                  locations."/" = {
+                    proxyPass = "http://127.0.0.1:8096";
+                  };
+                  locations."/socket" = {
+                    proxyPass = "http://127.0.0.1:8096";
+                    proxyWebsockets = true;
+                  };
                 };
-                wifi4 = {
-                  enable = true;
-                  capabilities = [
-                    "LDPC"
-                    "HT40+"
-                    "SHORT-GI-40"
-                    "TX-STBC"
-                    "RX-STBC1"
-                    "MAX-AMSDU-7935"
-                    "SHORT-GI-20"
-                  ];
-                };
-                networks.wlp1s0 = {
-                  ssid = "very-unique-ssid";
-                  authentication = {
-                    mode = "wpa3-sae-transition";
-                    wpaPasswordFile = "/var/lib/secrets/wifi-passwd";
-                    saePasswordsFile = "/var/lib/secrets/wifi-passwd";
+              };
+
+
+              hostapd = {
+                enable = true;
+                radios.wlp1s0 = {
+                  countryCode = "IL";
+                  channel = 36;
+                  settings = {
+                    "he_oper_centr_freq_seg0_idx" = "42";
+                    "vht_oper_centr_freq_seg0_idx" = "42";
+                    "preamble" = 1;
+                  };
+                  band = "5g";
+                  wifi6 = {
+                    enable = true;
+                    operatingChannelWidth = "80";
+                  };
+                  wifi5 = {
+                    enable = true;
+                    operatingChannelWidth = "80";
+                    capabilities = [
+                      "MAX-MPDU-11454"
+                      "RXLDPC"
+                      "SHORT-GI-80"
+                      "TX-STBC-2BY1"
+                      "MU-BEAMFORMEE"
+                      "SU-BEAMFORMEE"
+                      "RX-ANTENNA-PATTERN"
+                      "TX-ANTENNA-PATTERN"
+                    ];
+                  };
+                  wifi4 = {
+                    enable = true;
+                    capabilities = [
+                      "LDPC"
+                      "HT40+"
+                      "SHORT-GI-40"
+                      "TX-STBC"
+                      "RX-STBC1"
+                      "MAX-AMSDU-7935"
+                      "SHORT-GI-20"
+                    ];
+                  };
+                  networks.wlp1s0 = {
+                    ssid = "very-unique-ssid";
+                    authentication = {
+                      mode = "wpa3-sae-transition";
+                      wpaPasswordFile = "/var/lib/secrets/wifi-passwd";
+                      saePasswordsFile = "/var/lib/secrets/wifi-passwd";
+                    };
                   };
                 };
               };

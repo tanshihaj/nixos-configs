@@ -23,6 +23,16 @@
               type = "A";
               value = "100.64.0.6";
             }
+            {
+              name = "jellyfin.zaripov.vpn";
+              type = "A";
+              value = "100.64.0.1";
+            }
+            {
+              name = "qbittorrent.zaripov.vpn";
+              type = "A";
+              value = "100.64.0.1";
+            }
           ];
         };
 
@@ -33,6 +43,7 @@
 
     nginx = {
       enable = true;
+      recommendedProxySettings = true;
       virtualHosts."headscale.zaripov.net" = {
         forceSSL = true;
         enableACME = true;

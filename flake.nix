@@ -200,6 +200,8 @@
               firefox
               telegram-desktop
               prismlauncher
+              jellyfin-media-player
+              dino
             ];
 
             environment.variables = {

@@ -202,6 +202,7 @@
               prismlauncher
               jellyfin-media-player
               dino
+              binaryninja-free
             ];
 
             environment.variables = {
@@ -234,6 +235,7 @@
               builtins.elem (lib.getName pkg) [
                 "steam"
                 "steam-unwrapped"
+                "binaryninja-free"
               ];
 
             nix.distributedBuilds = true;

@@ -200,7 +200,6 @@
               firefox
               telegram-desktop
               prismlauncher
-              jellyfin-media-player
               dino
               binaryninja-free
             ];

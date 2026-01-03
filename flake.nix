@@ -25,6 +25,7 @@
               lm_sensors
               lsof
               mtr
+              ncdu
               nix-tree
               pciutils
               pstree
@@ -69,7 +70,6 @@
                   AllowUsers = [ "kamil" ];
                 };
               };
-
               tailscale.enable = true;
             };
 
@@ -176,7 +176,12 @@
           };
 
         laptop =
-          { pkgs, lib, ... }:
+          {
+            config,
+            pkgs,
+            lib,
+            ...
+          }:
           {
             environment.systemPackages = with pkgs; [
               # admin
@@ -193,6 +198,8 @@
               rustfmt
               tio
               vscodium
+              zig
+              zls
 
               # misc
               mpv
@@ -202,6 +209,7 @@
               prismlauncher
               dino
               binaryninja-free
+              jellyfin-media-player
             ];
 
             environment.variables = {
@@ -212,6 +220,9 @@
               hostName = "laptop";
               # domain = "zaripov.net";
               networkmanager.enable = true;
+              firewall.interfaces.${config.services.tailscale.interfaceName}.allowedTCPPorts = [
+                9100 # node exporter
+              ];
             };
 
             services = {
@@ -222,6 +233,17 @@
               # sadly the only DE that both support fractional display scale AND stable enough to be usable is KDE
               desktopManager.plasma6.enable = true;
               displayManager.sddm.enable = true;
+
+              prometheus.exporters.node = {
+                enable = true;
+                listenAddress = "0.0.0.0";
+                port = 9100;
+                enabledCollectors = [
+                  "systemd"
+                  "processes"
+                ];
+                extraFlags = [ "--web.disable-exporter-metrics" ];
+              };
             };
             virtualisation.docker.enable = true;
             virtualisation.libvirtd.enable = true;
@@ -338,7 +360,10 @@
                   };
                   dhcpServerConfig = {
                     EmitDNS = true;
-                    DNS = [ "1.1.1.1" "8.8.8.8" ];
+                    DNS = [
+                      "1.1.1.1"
+                      "8.8.8.8"
+                    ];
                   };
                 };
                 enP1p1s0 = {
@@ -357,7 +382,10 @@
                   };
                   dhcpServerConfig = {
                     EmitDNS = true;
-                    DNS = [ "1.1.1.1" "8.8.8.8" ];
+                    DNS = [
+                      "1.1.1.1"
+                      "8.8.8.8"
+                    ];
                   };
                 };
                 # usb-front-2 = {
@@ -398,7 +426,11 @@
                 recommendedProxySettings = true;
 
                 defaultListen = [
-                  { addr = "100.64.0.1"; port = 80; ssl = false; }
+                  {
+                    addr = "100.64.0.1";
+                    port = 80;
+                    ssl = false;
+                  }
                 ];
                 virtualHosts."qbittorrent.zaripov.vpn" = {
                   locations."/" = {
@@ -415,7 +447,6 @@
                   };
                 };
               };
-
 
               hostapd = {
                 enable = true;

@@ -22,6 +22,11 @@
     nginx = {
       enable = true;
       virtualHosts."zaripov.net" = {
+        serverAliases = [
+          "upload.zaripov.net"
+          "conference.zaripov.net"
+          "pubsub.zaripov.net"
+        ];
         addSSL = true;
         enableACME = true;
         root = "/var/www/zaripov.net";

@@ -2,7 +2,7 @@
   description = "My NixOS configs backup";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
   outputs =
@@ -40,6 +40,7 @@
               gcc
               gdb
               git
+              lazygit
               gnumake
               nixfmt-rfc-style
               nodejs_24
@@ -80,11 +81,11 @@
               extraGroups = [ "wheel" ];
 
               openssh.authorizedKeys.keys = [
-                # laptop
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC4Cw8HotJM4mvtqy5xF3tWAiR94nbFOOEmwKeXMFDvi kamil@laptop"
+                # Yubikey #34041826 PIV 9a (personal)
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIILwX0GTzl4v7unG4N+Zy0JcLUJiVmlA02CdadnN18xz Yubikey #34041826 PIV 9a (personal)"
 
-                # yubikey
-                "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAICW80fIM/gag5OkCl7UVGspgSBlCvvIvSMoyvJWN8Y8uAAAAC3NzaDp5dWJpa2V5 kamil@laptop"
+                # Yubikey #17674952 PIV 9a (work)
+                "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBCz8zM7NNS4K6Ny2wz/iRyagMD3fLNVV5fYVkhrNDgk6WV0zIqwapkjSyR3Im8/s93RZef7pqEwmqho2WekHdrjIzmCVl+NnUJ25yPuHb5V3vLiuPUdgVyEMiusZv+XlrQ== Yubikey #17674952 PIV 9a (work)"
 
                 # router
                 "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH0h7nw/wXl7Uz+FjqRU9htpOVGuqH776n5ZoFIwwTRz kamil@router"
@@ -183,6 +184,7 @@
             ...
           }:
           {
+            imports = [ ./modules/piv-ssh-agent.nix ];
             environment.systemPackages = with pkgs; [
               # admin
               resources
@@ -200,21 +202,20 @@
               vscodium
               zig
               zls
+              vscode
 
               # misc
-              mpv
               chromium
               firefox
               telegram-desktop
-              prismlauncher
+              whatsapp-electron
               dino
-              binaryninja-free
+              zoom-us
+              mpv
               jellyfin-media-player
+              stm32cubemx
+              transmission_4-qt6
             ];
-
-            environment.variables = {
-              RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
-            };
 
             networking = {
               hostName = "laptop";
@@ -231,8 +232,8 @@
               pcscd.enable = true;
 
               # sadly the only DE that both support fractional display scale AND stable enough to be usable is KDE
-              desktopManager.plasma6.enable = true;
-              displayManager.sddm.enable = true;
+              displayManager.cosmic-greeter.enable = true;
+              desktopManager.cosmic.enable = true;
 
               prometheus.exporters.node = {
                 enable = true;
@@ -246,9 +247,8 @@
               };
             };
             virtualisation.docker.enable = true;
-            virtualisation.libvirtd.enable = true;
             programs.steam.enable = true;
-            programs.virt-manager.enable = true;
+            programs.sysdig.enable = true;
 
             # sorry RMS but I like to play GTA
             nixpkgs.config.allowUnfreePredicate =
@@ -256,40 +256,40 @@
               builtins.elem (lib.getName pkg) [
                 "steam"
                 "steam-unwrapped"
-                "binaryninja-free"
+                "zoom"
+                "stm32cubemx"
+                "vscode"
               ];
 
-            nix.distributedBuilds = true;
-            nix.buildMachines = [
-              {
-                hostName = "server";
-                sshUser = "kamil";
-                sshKey = "/home/kamil/.ssh/id_ed25519";
-                system = "aarch64-linux";
-                maxJobs = 12;
-                supportedFeatures = [
-                  "kvm"
-                  "benchmark"
-                  "big-parallel"
-                ];
-              }
-            ];
+            # nix.distributedBuilds = true;
+            # nix.buildMachines = [
+            #   {
+            #     hostName = "server";
+            #     sshUser = "kamil";
+            #     sshKey = "/home/kamil/.ssh/id_ed25519";
+            #     system = "aarch64-linux";
+            #     maxJobs = 12;
+            #     supportedFeatures = [
+            #       "kvm"
+            #       "benchmark"
+            #       "big-parallel"
+            #     ];
+            #   }
+            # ];
 
-            services.fprintd.enable = true;
-            security.pam.services.login.fprintAuth = true;
-            security.pam.services.sudo.fprintAuth = true;
-            security.pam.services.polkit-1.fprintAuth = true;
-            security.pam.services.sddm.fprintAuth = true;
+            # services.fprintd.enable = true;
+            # security.pam.services.login.fprintAuth = true;
+            # security.pam.services.sudo.fprintAuth = true;
+            # security.pam.services.polkit-1.fprintAuth = true;
+            # security.pam.services.sddm.fprintAuth = true;
 
             users.users.kamil = {
               extraGroups = [
-                "libvirtd"
-                "kvm"
-                "wheel"
                 "docker"
               ];
             };
           };
+
         router =
           { config, pkgs, ... }:
           {

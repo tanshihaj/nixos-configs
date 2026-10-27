@@ -103,10 +103,7 @@
               ./modules/ejabberd
               ./modules/headscale
               ./modules/monitoring
-            ];
-
-            environment.systemPackages = with pkgs; [
-              influxdb2-cli
+              ./modules/security-nginx-authelia.nix
             ];
 
             systemd.network = {
@@ -184,7 +181,7 @@
             ...
           }:
           {
-            imports = [ ./modules/piv-ssh-agent.nix ];
+            imports = [ ./modules/security-piv-ssh-agent.nix ];
             environment.systemPackages = with pkgs; [
               # admin
               resources

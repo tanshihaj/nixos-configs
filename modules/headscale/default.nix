@@ -17,6 +17,7 @@
         server_url = "https://headscale.zaripov.net";
         dns = {
           base_domain = "zaripov.vpn";
+          nameservers.global = [ "1.1.1.1" "8.8.8.8" ];
           extra_records = [
             {
               name = "grafana.zaripov.vpn"; # FIXME: should be moved to monitoring module probably
